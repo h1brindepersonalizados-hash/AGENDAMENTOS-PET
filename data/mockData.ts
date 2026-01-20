@@ -1,6 +1,13 @@
 
 import { Pet } from '../types';
 
+// Helper to get a due date for mock data
+const getDueDate = (daysToAdd: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysToAdd);
+  return date.toISOString().split('T')[0];
+};
+
 export const petData: Pet[] = [
   {
     id: 'pet-1',
@@ -27,6 +34,10 @@ export const petData: Pet[] = [
     feedingInstructions: 'Ração seca, 2 vezes ao dia.',
     isCheckedIn: true,
     dailySummaryNotes: 'Comeu bem e brincou bastante com o Thor. Fez bastante xixi e cocô normais.',
+    attendance: [],
+    paymentType: 'mensal',
+    monthlyFee: 500,
+    dueDate: getDueDate(10), // Due in 10 days
   },
   {
     id: 'pet-2',
@@ -53,6 +64,10 @@ export const petData: Pet[] = [
     feedingInstructions: 'Ração para gatos castrados, à vontade.',
     isCheckedIn: true,
     dailySummaryNotes: 'Passou a maior parte do dia na prateleira mais alta, mas desceu para receber carinho à tarde.',
+    attendance: [],
+    paymentType: 'diaria',
+    dailyRate: 70,
+    dueDate: null,
   },
   {
     id: 'pet-3',
@@ -79,6 +94,10 @@ export const petData: Pet[] = [
     feedingInstructions: 'Ração hipoalergênica, 2 vezes ao dia.',
     isCheckedIn: false,
     dailySummaryNotes: '',
+    attendance: [],
+    paymentType: 'mensal',
+    monthlyFee: 550,
+    dueDate: getDueDate(-5), // 5 days overdue
   },
   {
     id: 'pet-4',
@@ -105,6 +124,10 @@ export const petData: Pet[] = [
     feedingInstructions: 'Ração úmida especial para rins, 3 vezes ao dia.',
     isCheckedIn: true,
     dailySummaryNotes: 'Comeu a ração úmida sem problemas. Tomou o remédio.',
+    attendance: [],
+    paymentType: 'mensal',
+    monthlyFee: 480,
+    dueDate: getDueDate(25), // Due in 25 days
   },
     {
     id: 'pet-5',
@@ -113,7 +136,7 @@ export const petData: Pet[] = [
     breed: 'Labrador',
     age: 4,
     gender: 'Macho',
-    photoUrl: 'https://picsum.photos/id/1062/300/300',
+    photoUrl: 'https://picsum.photos/id/1020/300/300',
     owner: {
       name: 'Fernanda Souza',
       phone: '(51) 98765-1122',
@@ -131,5 +154,9 @@ export const petData: Pet[] = [
     feedingInstructions: 'Ração à base de cordeiro, 2 vezes ao dia.',
     isCheckedIn: false,
     dailySummaryNotes: '',
+    attendance: [],
+    paymentType: 'diaria',
+    dailyRate: 80,
+    dueDate: null,
   }
 ];

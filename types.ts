@@ -22,6 +22,16 @@ export interface HealthInfo {
   vetPhone: string;
 }
 
+export interface AttendanceRecord {
+  date: string; // YYYY-MM-DD
+  status: 'present' | 'absent';
+}
+
+export interface ReminderSettings {
+  enabled: boolean;
+  time: string; // HH:MM format
+}
+
 export interface Pet {
   id: string;
   name: string;
@@ -36,4 +46,11 @@ export interface Pet {
   feedingInstructions: string;
   isCheckedIn: boolean;
   dailySummaryNotes: string;
+  attendance: AttendanceRecord[];
+
+  // Payment Information
+  paymentType: 'mensal' | 'diaria';
+  monthlyFee?: number;
+  dailyRate?: number;
+  dueDate?: string | null; // YYYY-MM-DD, only for 'mensal'
 }

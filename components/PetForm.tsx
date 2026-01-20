@@ -28,6 +28,11 @@ const initialFormData: Omit<Pet, 'id'> = {
   feedingInstructions: '',
   isCheckedIn: false,
   dailySummaryNotes: '',
+  attendance: [],
+  paymentType: 'mensal',
+  monthlyFee: 0,
+  dailyRate: 0,
+  dueDate: null,
 };
 
 const vaccineOptions: { [key in keyof Vaccines]: { label: string; species: ('Cachorro' | 'Gato')[] } } = {
@@ -48,7 +53,7 @@ const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ t
   </div>
 );
 
-const InputField: React.FC<{ label: string; name: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; as?: 'textarea' | 'select'; children?: React.ReactNode; className?: string }> = ({ label, name, value, onChange, type = 'text', required = false, as, children, className }) => (
+const InputField: React.FC<{ label: string; name: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void; type?: string; required?: boolean; as?: 'textarea' | 'select'; children?: React.ReactNode; className?: string; step?: string; min?: string; }> = ({ label, name, value, onChange, type = 'text', required = false, as, children, className, ...props }) => (
   <div className={className}>
     <label htmlFor={name} className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
     {as === 'textarea' ? (
@@ -58,7 +63,7 @@ const InputField: React.FC<{ label: string; name: string; value: string | number
         {children}
       </select>
     ) : (
-      <input type={type} id={name} name={name} value={value} onChange={onChange} required={required} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+      <input type={type} id={name} name={name} value={value} onChange={onChange} required={required} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" {...props} />
     )}
   </div>
 );
@@ -68,7 +73,11 @@ const PetForm: React.FC<PetFormProps> = ({ petToEdit, onSubmit, onCancel }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    
+    // Handle number inputs
+    const processedValue = type === 'number' ? parseFloat(value) || 0 : value;
+    
     const [section, field] = name.split('.');
 
     if (field) { // Nested object
@@ -77,15 +86,25 @@ const PetForm: React.FC<PetFormProps> = ({ petToEdit, onSubmit, onCancel }) => {
         [section]: {
           // @ts-ignore
           ...prev[section],
-          [field]: value,
+          [field]: processedValue,
         },
       }));
     } else { // Top-level field
       setFormData(prev => ({
         ...prev,
-        [name]: value,
+        [name]: processedValue,
       }));
     }
+  };
+  
+  const handlePaymentTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const paymentType = e.target.value as 'mensal' | 'diaria';
+      setFormData(prev => ({
+          ...prev,
+          paymentType,
+          monthlyFee: paymentType === 'diaria' ? 0 : prev.monthlyFee,
+          dailyRate: paymentType === 'mensal' ? 0 : prev.dailyRate,
+      }));
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +133,16 @@ const PetForm: React.FC<PetFormProps> = ({ petToEdit, onSubmit, onCancel }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    let submissionData = { ...formData };
+    
+    // Set initial due date for new monthly pets
+    if (!petToEdit && submissionData.paymentType === 'mensal') {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      submissionData.dueDate = dueDate.toISOString().split('T')[0];
+    }
+    
+    onSubmit(submissionData);
   };
   
   const currentVaccineOptions = Object.entries(vaccineOptions).filter(([, options]) => options.species.includes(formData.species));
@@ -153,6 +181,36 @@ const PetForm: React.FC<PetFormProps> = ({ petToEdit, onSubmit, onCancel }) => {
         <InputField label="Telefone" name="owner.phone" value={formData.owner.phone} onChange={handleChange} required />
         <InputField label="Email" name="owner.email" value={formData.owner.email} onChange={handleChange} type="email" />
         <InputField label="Endereço" name="owner.address" value={formData.owner.address} onChange={handleChange} />
+      </FormSection>
+      
+       <FormSection title="Informações de Pagamento">
+        <InputField label="Tipo de Pagamento" name="paymentType" value={formData.paymentType} onChange={handlePaymentTypeChange} as="select">
+            <option value="mensal">Mensal</option>
+            <option value="diaria">Diária</option>
+        </InputField>
+        {formData.paymentType === 'mensal' ? (
+            <InputField 
+                label="Valor Mensal (R$)" 
+                name="monthlyFee" 
+                value={formData.monthlyFee || ''} 
+                onChange={handleChange} 
+                type="number" 
+                step="0.01"
+                min="0"
+                required 
+            />
+        ) : (
+            <InputField 
+                label="Valor Diária (R$)" 
+                name="dailyRate" 
+                value={formData.dailyRate || ''} 
+                onChange={handleChange} 
+                type="number"
+                step="0.01"
+                min="0"
+                required 
+            />
+        )}
       </FormSection>
 
       <FormSection title="Saúde e Cuidados">

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Pet } from '../types';
-import { Edit, Share } from './Icons';
+import { Edit, Share, AlertCircle } from './Icons';
 
 interface DashboardProps {
   pets: Pet[];
@@ -12,10 +12,22 @@ interface DashboardProps {
   setTotalSlots: (slots: number) => void;
 }
 
+const getPaymentStatus = (pet: Pet): { text: string; color: string; isOverdue: boolean } => {
+    const today = new Date().toISOString().split('T')[0];
+    if (pet.paymentType === 'mensal') {
+        if (pet.dueDate && pet.dueDate < today) {
+            return { text: 'Em Atraso', color: 'bg-red-200 text-red-800', isOverdue: true };
+        }
+        return { text: 'Em Dia', color: 'bg-green-200 text-green-800', isOverdue: false };
+    }
+    return { text: 'Diária', color: 'bg-blue-200 text-blue-800', isOverdue: false };
+};
+
 const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, onEditPet: (pet: Pet) => void, onShare: (pet: Pet) => void }> = ({ pet, onToggleCheckIn, onEditPet, onShare }) => {
+  const paymentStatus = getPaymentStatus(pet);
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
-      <div className="flex items-center p-4">
+      <div className="flex items-start p-4">
         <img
           className="w-24 h-24 rounded-full object-cover mr-4 border-4 border-slate-200"
           src={pet.photoUrl}
@@ -25,6 +37,11 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, on
           <h3 className="text-xl font-bold text-indigo-800">{pet.name}</h3>
           <p className="text-gray-600">{pet.breed}</p>
           <p className="text-sm text-gray-500">Dono(a): {pet.owner.name}</p>
+          <div className="mt-2">
+            <span className={`py-1 px-2.5 rounded-full text-xs font-semibold ${paymentStatus.color}`}>
+              {paymentStatus.text}
+            </span>
+          </div>
         </div>
         <div className="flex flex-col space-y-2">
             <button onClick={() => onEditPet(pet)} className="text-gray-400 hover:text-indigo-600 p-2" aria-label="Editar Pet">
@@ -54,16 +71,18 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, on
 const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet, onShare, totalSlots, setTotalSlots }) => {
   const checkedInPets = pets.filter(pet => pet.isCheckedIn);
   const checkedOutPets = pets.filter(pet => !pet.isCheckedIn);
-  
+  const overduePayments = pets.filter(pet => getPaymentStatus(pet).isOverdue).length;
+
   const stats = [
     { label: 'Total de Pets', value: pets.length, color: 'bg-blue-500' },
     { label: 'Presentes Hoje', value: checkedInPets.length, color: 'bg-green-500' },
+    { label: 'Pagamentos em Atraso', value: overduePayments, color: 'bg-red-500' },
   ];
 
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map(stat => (
           <div key={stat.label} className={`p-6 rounded-xl text-white shadow-lg ${stat.color}`}>
             <p className="text-lg font-medium">{stat.label}</p>

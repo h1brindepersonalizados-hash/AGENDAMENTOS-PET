@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { Pet, Vaccines } from '../types';
-import { Edit } from './Icons';
+import { Edit, DollarSign } from './Icons';
 
 interface PetDetailModalProps {
   pet: Pet;
   onClose: () => void;
   onEdit: (pet: Pet) => void;
+  onShowHistory: (pet: Pet) => void;
+  onRegisterPayment: (petId: string) => void;
 }
 
 const vaccineLabels: Record<keyof Vaccines, string> = {
@@ -25,10 +27,13 @@ const InfoRow: React.FC<{ label: string; value: string | number | React.ReactNod
 );
 
 
-const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit }) => {
+const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, onShowHistory, onRegisterPayment }) => {
   const activeVaccines = Object.entries(pet.healthInfo.vaccinations)
     .filter(([, status]) => status)
     .map(([vaccine]) => vaccine as keyof Vaccines);
+
+  const today = new Date().toISOString().split('T')[0];
+  const isOverdue = pet.paymentType === 'mensal' && pet.dueDate && pet.dueDate < today;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -62,6 +67,29 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit })
                     <InfoRow label="Endereço" value={pet.owner.address} />
                 </dl>
             </div>
+            
+             <div>
+                <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Informações de Pagamento</h3>
+                <dl>
+                    <InfoRow label="Tipo de Plano" value={pet.paymentType === 'mensal' ? 'Mensal' : 'Diária'} />
+                    {pet.paymentType === 'mensal' ? (
+                        <>
+                            <InfoRow label="Valor Mensal" value={`R$ ${pet.monthlyFee?.toFixed(2)}`} />
+                            <InfoRow 
+                                label="Próximo Vencimento" 
+                                value={
+                                    <span className={isOverdue ? 'font-bold text-red-600' : ''}>
+                                        {pet.dueDate ? new Date(pet.dueDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A'}
+                                        {isOverdue && ' (Vencido)'}
+                                    </span>
+                                } 
+                            />
+                        </>
+                    ) : (
+                        <InfoRow label="Valor da Diária" value={`R$ ${pet.dailyRate?.toFixed(2)}`} />
+                    )}
+                </dl>
+            </div>
 
             <div>
                 <h3 className="text-xl font-semibold text-gray-800 border-b pb-2 mb-4">Saúde e Cuidados</h3>
@@ -91,22 +119,40 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit })
             </div>
         </div>
         
-        <div className="flex justify-end p-4 border-t bg-gray-50 rounded-b-lg space-x-3">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition"
-          >
-            Fechar
-          </button>
-           <button
-            onClick={() => {
-                onEdit(pet);
-                onClose();
-            }}
-            className="flex items-center px-6 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition"
-          >
-            <Edit className="w-4 h-4 mr-2" /> Editar
-          </button>
+        <div className="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-lg space-x-3">
+          <div>
+            {pet.paymentType === 'mensal' && (
+                <button
+                    onClick={() => {
+                        onRegisterPayment(pet.id);
+                        onClose();
+                    }}
+                    className="flex items-center px-6 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
+                >
+                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Pagamento
+                </button>
+            )}
+          </div>
+          <div className="flex space-x-3">
+             <button
+                onClick={() => {
+                    onShowHistory(pet);
+                    onClose();
+                }}
+                className="px-6 py-2 rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200 transition"
+              >
+                Histórico de Presença
+              </button>
+               <button
+                onClick={() => {
+                    onEdit(pet);
+                    onClose();
+                }}
+                className="flex items-center px-6 py-2 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition"
+              >
+                <Edit className="w-4 h-4 mr-2" /> Editar
+              </button>
+          </div>
         </div>
       </div>
     </div>
