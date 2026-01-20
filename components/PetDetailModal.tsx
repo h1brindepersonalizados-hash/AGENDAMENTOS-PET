@@ -2,6 +2,7 @@
 import React from 'react';
 import { Pet, Vaccines } from '../types';
 import { Edit, DollarSign } from './Icons';
+import { getPaymentStatus } from '../utils/paymentUtils';
 
 interface PetDetailModalProps {
   pet: Pet;
@@ -9,6 +10,7 @@ interface PetDetailModalProps {
   onEdit: (pet: Pet) => void;
   onShowHistory: (pet: Pet) => void;
   onRegisterPayment: (petId: string) => void;
+  onRegisterDailyPayment: (petId: string) => void;
 }
 
 const vaccineLabels: Record<keyof Vaccines, string> = {
@@ -27,13 +29,12 @@ const InfoRow: React.FC<{ label: string; value: string | number | React.ReactNod
 );
 
 
-const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, onShowHistory, onRegisterPayment }) => {
+const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, onShowHistory, onRegisterPayment, onRegisterDailyPayment }) => {
   const activeVaccines = Object.entries(pet.healthInfo.vaccinations)
     .filter(([, status]) => status)
     .map(([vaccine]) => vaccine as keyof Vaccines);
 
-  const today = new Date().toISOString().split('T')[0];
-  const isOverdue = pet.paymentType === 'mensal' && pet.dueDate && pet.dueDate < today;
+  const paymentStatus = getPaymentStatus(pet);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -78,9 +79,9 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, o
                             <InfoRow 
                                 label="Próximo Vencimento" 
                                 value={
-                                    <span className={isOverdue ? 'font-bold text-red-600' : ''}>
+                                    <span className={paymentStatus.isOverdue ? 'font-bold text-red-600' : ''}>
                                         {pet.dueDate ? new Date(pet.dueDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'N/A'}
-                                        {isOverdue && ' (Vencido)'}
+                                        {paymentStatus.isOverdue && ' (Vencido)'}
                                     </span>
                                 } 
                             />
@@ -89,6 +90,18 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, o
                         <InfoRow label="Valor da Diária" value={`R$ ${pet.dailyRate?.toFixed(2)}`} />
                     )}
                 </dl>
+                 {pet.paymentHistory.length > 0 && (
+                  <div className="mt-4">
+                      <h4 className="text-md font-semibold text-gray-700 mb-2">Histórico Recente</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 max-h-24 overflow-y-auto">
+                          {pet.paymentHistory.slice(-5).reverse().map((p, index) => (
+                              <li key={index}>
+                                  {new Date(p.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - R$ {p.amount.toFixed(2)} ({p.type})
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
+                )}
             </div>
 
             <div>
@@ -120,16 +133,27 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, o
         </div>
         
         <div className="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-lg space-x-3">
-          <div>
+          <div className="flex space-x-2">
             {pet.paymentType === 'mensal' && (
                 <button
                     onClick={() => {
                         onRegisterPayment(pet.id);
                         onClose();
                     }}
-                    className="flex items-center px-6 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
+                    className="flex items-center px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
                 >
-                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Pagamento
+                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Mensalidade
+                </button>
+            )}
+            {paymentStatus.isDailyPending && (
+                 <button
+                    onClick={() => {
+                        onRegisterDailyPayment(pet.id);
+                        onClose();
+                    }}
+                    className="flex items-center px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
+                >
+                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Diária
                 </button>
             )}
           </div>

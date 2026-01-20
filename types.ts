@@ -32,6 +32,12 @@ export interface ReminderSettings {
   time: string; // HH:MM format
 }
 
+export interface PaymentRecord {
+  date: string; // YYYY-MM-DD
+  amount: number;
+  type: 'mensal' | 'diaria';
+}
+
 export interface Pet {
   id: string;
   name: string;
@@ -53,4 +59,5 @@ export interface Pet {
   monthlyFee?: number;
   dailyRate?: number;
   dueDate?: string | null; // YYYY-MM-DD, only for 'mensal'
+  paymentHistory: PaymentRecord[];
 }

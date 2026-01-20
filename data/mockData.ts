@@ -38,6 +38,7 @@ export const petData: Pet[] = [
     paymentType: 'mensal',
     monthlyFee: 500,
     dueDate: getDueDate(10), // Due in 10 days
+    paymentHistory: [],
   },
   {
     id: 'pet-2',
@@ -68,6 +69,7 @@ export const petData: Pet[] = [
     paymentType: 'diaria',
     dailyRate: 70,
     dueDate: null,
+    paymentHistory: [],
   },
   {
     id: 'pet-3',
@@ -98,6 +100,7 @@ export const petData: Pet[] = [
     paymentType: 'mensal',
     monthlyFee: 550,
     dueDate: getDueDate(-5), // 5 days overdue
+    paymentHistory: [],
   },
   {
     id: 'pet-4',
@@ -128,6 +131,7 @@ export const petData: Pet[] = [
     paymentType: 'mensal',
     monthlyFee: 480,
     dueDate: getDueDate(25), // Due in 25 days
+    paymentHistory: [],
   },
     {
     id: 'pet-5',
@@ -158,5 +162,6 @@ export const petData: Pet[] = [
     paymentType: 'diaria',
     dailyRate: 80,
     dueDate: null,
+    paymentHistory: [],
   }
 ];

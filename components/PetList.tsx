@@ -1,36 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Pet } from '../types';
-import PetDetailModal from './PetDetailModal';
 import { Edit } from './Icons';
+import { getPaymentStatus } from '../utils/paymentUtils';
 
 interface PetListProps {
   pets: Pet[];
   onEditPet: (pet: Pet) => void;
   onShowHistory: (pet: Pet) => void;
+  onViewDetails: (pet: Pet) => void;
 }
 
-const getPaymentStatus = (pet: Pet): { text: string; color: string; } => {
-    const today = new Date().toISOString().split('T')[0];
-    if (pet.paymentType === 'mensal') {
-        if (pet.dueDate && pet.dueDate < today) {
-            return { text: 'Em Atraso', color: 'bg-red-200 text-red-800' };
-        }
-        return { text: 'Em Dia', color: 'bg-green-200 text-green-800' };
-    }
-    return { text: 'Diária', color: 'bg-blue-200 text-blue-800' };
-};
 
-const PetList: React.FC<PetListProps> = ({ pets, onEditPet, onShowHistory }) => {
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
-
-  const handleViewDetails = (pet: Pet) => {
-    setSelectedPet(pet);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedPet(null);
-  };
+const PetList: React.FC<PetListProps> = ({ pets, onEditPet, onShowHistory, onViewDetails }) => {
 
   return (
     <>
@@ -81,7 +63,7 @@ const PetList: React.FC<PetListProps> = ({ pets, onEditPet, onShowHistory }) => 
                     <td className="py-3 px-6 text-center">
                       <div className="flex item-center justify-center space-x-4">
                         <button
-                          onClick={() => handleViewDetails(pet)}
+                          onClick={() => onViewDetails(pet)}
                           className="text-indigo-600 hover:text-indigo-900 font-medium"
                         >
                           Ver Ficha
@@ -107,9 +89,6 @@ const PetList: React.FC<PetListProps> = ({ pets, onEditPet, onShowHistory }) => 
           </table>
         </div>
       </div>
-      {selectedPet && (
-        <PetDetailModal pet={selectedPet} onClose={handleCloseModal} onEdit={onEditPet} onShowHistory={onShowHistory} onRegisterPayment={() => { /* This will be handled by App.tsx */ }} />
-      )}
     </>
   );
 };

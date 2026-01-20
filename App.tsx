@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Pet, ReminderSettings } from './types';
+import { Pet, ReminderSettings, PaymentRecord } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import PetList from './components/PetList';
@@ -83,6 +83,7 @@ const App: React.FC<AppProps> = ({ currentUser, onLogout }) => {
       id: `pet-${Date.now()}`,
       dailySummaryNotes: '',
       attendance: [],
+      paymentHistory: [],
     };
     setPets(prevPets => [newPet, ...prevPets]);
     setCurrentView('pet-list');
@@ -135,12 +136,20 @@ const App: React.FC<AppProps> = ({ currentUser, onLogout }) => {
     setPets(prevPets =>
         prevPets.map(pet => {
             if (pet.id === petId && pet.paymentType === 'mensal' && pet.dueDate) {
-                const currentDueDate = new Date(pet.dueDate + 'T00:00:00'); // Ensure date is parsed correctly without timezone issues
+                const today = new Date().toISOString().split('T')[0];
+                const paymentRecord: PaymentRecord = {
+                  date: today,
+                  amount: pet.monthlyFee || 0,
+                  type: 'mensal',
+                };
+
+                const currentDueDate = new Date(pet.dueDate + 'T00:00:00'); 
                 const newDueDate = new Date(currentDueDate.setMonth(currentDueDate.getMonth() + 1));
                 
                 return {
                     ...pet,
-                    dueDate: newDueDate.toISOString().split('T')[0]
+                    dueDate: newDueDate.toISOString().split('T')[0],
+                    paymentHistory: [...pet.paymentHistory, paymentRecord],
                 };
             }
             return pet;
@@ -148,10 +157,36 @@ const App: React.FC<AppProps> = ({ currentUser, onLogout }) => {
     );
   };
 
+  const handleRegisterDailyPayment = (petId: string) => {
+    setPets(prevPets => 
+      prevPets.map(pet => {
+        if (pet.id === petId && pet.paymentType === 'diaria') {
+            const today = new Date().toISOString().split('T')[0];
+
+            // Avoid duplicate payment for the same day
+            const hasPaidToday = pet.paymentHistory.some(p => p.date === today && p.type === 'diaria');
+            if (hasPaidToday) return pet;
+            
+            const paymentRecord: PaymentRecord = {
+              date: today,
+              amount: pet.dailyRate || 0,
+              type: 'diaria',
+            };
+
+            return {
+              ...pet,
+              paymentHistory: [...pet.paymentHistory, paymentRecord],
+            };
+        }
+        return pet;
+      })
+    );
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard pets={pets} onToggleCheckIn={handleToggleCheckIn} onEditPet={handleEditPet} totalSlots={totalSlots} setTotalSlots={setTotalSlots} onShare={setPetToShare} />;
+        return <Dashboard pets={pets} onToggleCheckIn={handleToggleCheckIn} onEditPet={handleEditPet} totalSlots={totalSlots} setTotalSlots={setTotalSlots} onShare={setPetToShare} onRegisterDailyPayment={handleRegisterDailyPayment} />;
       case 'pet-list':
         return <PetList pets={pets} onEditPet={handleEditPet} onShowHistory={setPetForHistory} onViewDetails={setPetForDetails} />;
       case 'add-pet':
@@ -161,7 +196,7 @@ const App: React.FC<AppProps> = ({ currentUser, onLogout }) => {
       case 'settings':
         return <Settings companyName={companyName} setCompanyName={setCompanyName} reminderSettings={reminderSettings} setReminderSettings={setReminderSettings} />;
       default:
-        return <Dashboard pets={pets} onToggleCheckIn={handleToggleCheckIn} onEditPet={handleEditPet} totalSlots={totalSlots} setTotalSlots={setTotalSlots} onShare={setPetToShare} />;
+        return <Dashboard pets={pets} onToggleCheckIn={handleToggleCheckIn} onEditPet={handleEditPet} totalSlots={totalSlots} setTotalSlots={setTotalSlots} onShare={setPetToShare} onRegisterDailyPayment={handleRegisterDailyPayment} />;
     }
   };
 
@@ -176,7 +211,7 @@ const App: React.FC<AppProps> = ({ currentUser, onLogout }) => {
       </div>
       {petToShare && <ShareModal pet={petToShare} onUpdateNotes={handleUpdateDailyNotes} onClose={() => setPetToShare(null)} companyName={companyName} />}
       {petForHistory && <AttendanceHistoryModal pet={petForHistory} onClose={() => setPetForHistory(null)} />}
-      {petForDetails && <PetDetailModal pet={petForDetails} onClose={() => setPetForDetails(null)} onEdit={handleEditPet} onShowHistory={setPetForHistory} onRegisterPayment={handleRegisterPayment} />}
+      {petForDetails && <PetDetailModal pet={petForDetails} onClose={() => setPetForDetails(null)} onEdit={handleEditPet} onShowHistory={setPetForHistory} onRegisterPayment={handleRegisterPayment} onRegisterDailyPayment={handleRegisterDailyPayment} />}
     </div>
   );
 };

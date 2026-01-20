@@ -1,29 +1,20 @@
 
 import React from 'react';
 import { Pet } from '../types';
-import { Edit, Share, AlertCircle } from './Icons';
+import { Edit, Share, DollarSign, AlertCircle } from './Icons';
+import { getPaymentStatus } from '../utils/paymentUtils';
 
 interface DashboardProps {
   pets: Pet[];
   onToggleCheckIn: (petId: string) => void;
   onEditPet: (pet: Pet) => void;
   onShare: (pet: Pet) => void;
+  onRegisterDailyPayment: (petId: string) => void;
   totalSlots: number;
   setTotalSlots: (slots: number) => void;
 }
 
-const getPaymentStatus = (pet: Pet): { text: string; color: string; isOverdue: boolean } => {
-    const today = new Date().toISOString().split('T')[0];
-    if (pet.paymentType === 'mensal') {
-        if (pet.dueDate && pet.dueDate < today) {
-            return { text: 'Em Atraso', color: 'bg-red-200 text-red-800', isOverdue: true };
-        }
-        return { text: 'Em Dia', color: 'bg-green-200 text-green-800', isOverdue: false };
-    }
-    return { text: 'Diária', color: 'bg-blue-200 text-blue-800', isOverdue: false };
-};
-
-const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, onEditPet: (pet: Pet) => void, onShare: (pet: Pet) => void }> = ({ pet, onToggleCheckIn, onEditPet, onShare }) => {
+const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void; onEditPet: (pet: Pet) => void; onShare: (pet: Pet) => void; onRegisterDailyPayment: (petId: string) => void; }> = ({ pet, onToggleCheckIn, onEditPet, onShare, onRegisterDailyPayment }) => {
   const paymentStatus = getPaymentStatus(pet);
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
@@ -54,11 +45,19 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, on
             )}
         </div>
       </div>
-      <div className="px-4 pb-4 mt-auto">
+      <div className="px-4 pb-4 mt-auto space-y-2">
+        {paymentStatus.isDailyPending && (
+           <button
+             onClick={() => onRegisterDailyPayment(pet.id)}
+             className="w-full flex items-center justify-center py-2 px-4 rounded-lg font-semibold text-white transition-colors duration-200 bg-green-500 hover:bg-green-600"
+            >
+              <DollarSign className="w-4 h-4 mr-2" /> Registrar Diária
+            </button>
+        )}
         <button
           onClick={() => onToggleCheckIn(pet.id)}
           className={`w-full py-2 px-4 rounded-lg font-semibold text-white transition-colors duration-200 ${
-            pet.isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+            pet.isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'
           }`}
         >
           {pet.isCheckedIn ? 'Realizar Check-out' : 'Realizar Check-in'}
@@ -68,15 +67,15 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void, on
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet, onShare, totalSlots, setTotalSlots }) => {
+const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet, onShare, onRegisterDailyPayment, totalSlots, setTotalSlots }) => {
   const checkedInPets = pets.filter(pet => pet.isCheckedIn);
   const checkedOutPets = pets.filter(pet => !pet.isCheckedIn);
   const overduePayments = pets.filter(pet => getPaymentStatus(pet).isOverdue).length;
 
   const stats = [
-    { label: 'Total de Pets', value: pets.length, color: 'bg-blue-500' },
-    { label: 'Presentes Hoje', value: checkedInPets.length, color: 'bg-green-500' },
-    { label: 'Pagamentos em Atraso', value: overduePayments, color: 'bg-red-500' },
+    { label: 'Total de Pets', value: pets.length, color: 'bg-blue-500', icon: null },
+    { label: 'Presentes Hoje', value: checkedInPets.length, color: 'bg-green-500', icon: null },
+    { label: 'Pagamentos em Atraso', value: overduePayments, color: 'bg-red-500', icon: <AlertCircle className="w-8 h-8 opacity-75" /> },
   ];
 
   return (
@@ -85,8 +84,13 @@ const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet,
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map(stat => (
           <div key={stat.label} className={`p-6 rounded-xl text-white shadow-lg ${stat.color}`}>
-            <p className="text-lg font-medium">{stat.label}</p>
-            <p className="text-4xl font-bold">{stat.value}</p>
+             <div className="flex justify-between items-center">
+                <div>
+                    <p className="text-lg font-medium">{stat.label}</p>
+                    <p className="text-4xl font-bold">{stat.value}</p>
+                </div>
+                {stat.icon}
+            </div>
           </div>
         ))}
         <div className="p-6 rounded-xl text-white shadow-lg bg-yellow-500">
@@ -111,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet,
         {checkedInPets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {checkedInPets.map(pet => (
-              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} />
+              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onRegisterDailyPayment={onRegisterDailyPayment} />
             ))}
           </div>
         ) : (
@@ -127,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet,
         {checkedOutPets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {checkedOutPets.map(pet => (
-              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare}/>
+              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onRegisterDailyPayment={onRegisterDailyPayment} />
             ))}
           </div>
         ) : (

@@ -33,6 +33,7 @@ const initialFormData: Omit<Pet, 'id'> = {
   monthlyFee: 0,
   dailyRate: 0,
   dueDate: null,
+  paymentHistory: [],
 };
 
 const vaccineOptions: { [key in keyof Vaccines]: { label: string; species: ('Cachorro' | 'Gato')[] } } = {
