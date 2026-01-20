@@ -1,0 +1,5 @@
+{
+  "name": "Agenda Hotelzinho Pet",
+  "description": "Um aplicativo para gerenciar a agenda de um hotel para pets, incluindo lista de presença, informações e fichas cadastrais dos animais.",
+  "requestFramePermissions": []
+}
