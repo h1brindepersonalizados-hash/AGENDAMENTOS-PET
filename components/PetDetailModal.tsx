@@ -9,8 +9,7 @@ interface PetDetailModalProps {
   onClose: () => void;
   onEdit: (pet: Pet) => void;
   onShowHistory: (pet: Pet) => void;
-  onRegisterPayment: (petId: string) => void;
-  onRegisterDailyPayment: (petId: string) => void;
+  onShowPaymentModal: (pet: Pet) => void;
 }
 
 const vaccineLabels: Record<keyof Vaccines, string> = {
@@ -29,7 +28,7 @@ const InfoRow: React.FC<{ label: string; value: string | number | React.ReactNod
 );
 
 
-const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, onShowHistory, onRegisterPayment, onRegisterDailyPayment }) => {
+const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, onShowHistory, onShowPaymentModal }) => {
   const activeVaccines = Object.entries(pet.healthInfo.vaccinations)
     .filter(([, status]) => status)
     .map(([vaccine]) => vaccine as keyof Vaccines);
@@ -133,27 +132,16 @@ const PetDetailModal: React.FC<PetDetailModalProps> = ({ pet, onClose, onEdit, o
         </div>
         
         <div className="flex justify-between items-center p-4 border-t bg-gray-50 rounded-b-lg space-x-3">
-          <div className="flex space-x-2">
-            {pet.paymentType === 'mensal' && (
+          <div>
+            {(pet.paymentType === 'mensal' || paymentStatus.isDailyPending) && (
                 <button
                     onClick={() => {
-                        onRegisterPayment(pet.id);
+                        onShowPaymentModal(pet);
                         onClose();
                     }}
                     className="flex items-center px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
                 >
-                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Mensalidade
-                </button>
-            )}
-            {paymentStatus.isDailyPending && (
-                 <button
-                    onClick={() => {
-                        onRegisterDailyPayment(pet.id);
-                        onClose();
-                    }}
-                    className="flex items-center px-4 py-2 rounded-md text-white bg-green-600 hover:bg-green-700 transition"
-                >
-                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Diária
+                    <DollarSign className="w-4 h-4 mr-2" /> Registrar Pagamento
                 </button>
             )}
           </div>

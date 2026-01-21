@@ -9,12 +9,12 @@ interface DashboardProps {
   onToggleCheckIn: (petId: string) => void;
   onEditPet: (pet: Pet) => void;
   onShare: (pet: Pet) => void;
-  onRegisterDailyPayment: (petId: string) => void;
+  onShowPaymentModal: (pet: Pet) => void;
   totalSlots: number;
   setTotalSlots: (slots: number) => void;
 }
 
-const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void; onEditPet: (pet: Pet) => void; onShare: (pet: Pet) => void; onRegisterDailyPayment: (petId: string) => void; }> = ({ pet, onToggleCheckIn, onEditPet, onShare, onRegisterDailyPayment }) => {
+const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void; onEditPet: (pet: Pet) => void; onShare: (pet: Pet) => void; onShowPaymentModal: (pet: Pet) => void; }> = ({ pet, onToggleCheckIn, onEditPet, onShare, onShowPaymentModal }) => {
   const paymentStatus = getPaymentStatus(pet);
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 flex flex-col">
@@ -48,7 +48,7 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void; on
       <div className="px-4 pb-4 mt-auto space-y-2">
         {paymentStatus.isDailyPending && (
            <button
-             onClick={() => onRegisterDailyPayment(pet.id)}
+             onClick={() => onShowPaymentModal(pet)}
              className="w-full flex items-center justify-center py-2 px-4 rounded-lg font-semibold text-white transition-colors duration-200 bg-green-500 hover:bg-green-600"
             >
               <DollarSign className="w-4 h-4 mr-2" /> Registrar Diária
@@ -67,7 +67,7 @@ const PetCard: React.FC<{ pet: Pet; onToggleCheckIn: (petId: string) => void; on
   );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet, onShare, onRegisterDailyPayment, totalSlots, setTotalSlots }) => {
+const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet, onShare, onShowPaymentModal, totalSlots, setTotalSlots }) => {
   const checkedInPets = pets.filter(pet => pet.isCheckedIn);
   const checkedOutPets = pets.filter(pet => !pet.isCheckedIn);
   const overduePayments = pets.filter(pet => getPaymentStatus(pet).isOverdue).length;
@@ -115,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet,
         {checkedInPets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {checkedInPets.map(pet => (
-              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onRegisterDailyPayment={onRegisterDailyPayment} />
+              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onShowPaymentModal={onShowPaymentModal} />
             ))}
           </div>
         ) : (
@@ -131,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ pets, onToggleCheckIn, onEditPet,
         {checkedOutPets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {checkedOutPets.map(pet => (
-              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onRegisterDailyPayment={onRegisterDailyPayment} />
+              <PetCard key={pet.id} pet={pet} onToggleCheckIn={onToggleCheckIn} onEditPet={onEditPet} onShare={onShare} onShowPaymentModal={onShowPaymentModal} />
             ))}
           </div>
         ) : (
